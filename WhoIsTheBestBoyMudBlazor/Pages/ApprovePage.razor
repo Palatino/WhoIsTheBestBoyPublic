@@ -1,0 +1,72 @@
+﻿@page "/approve"
+
+@inject IDogService dogService
+@using BestBoyClient.Components
+@inject ISnackbar Snackbar
+@attribute [Authorize(Roles = "admin")]
+
+<MudText Typo="Typo.h4" Align="Align.Center" Class="my-5">Dogs awaiting approval</MudText>
+
+@if (dogs is null)
+{
+    <LoadingPanel></LoadingPanel>
+}
+else if (dogs.Count == 0)
+{
+    <MudText Align="Align.Center" Typo="Typo.h4">All done here! No dogs awaiting approval</MudText>
+
+}
+else
+{
+    <MudGrid Class="mx-2">
+        @foreach (var dog in dogs)
+        {
+            <DogApproveCard Dog="dog" DeleteById="DeleteById" ApproveById="ApproveById"></DogApproveCard>
+        }
+    </MudGrid>
+}
+
+
+
+@code {
+
+
+    List<DogDTO> dogs;
+
+    protected override async Task OnInitializedAsync()
+    {
+        dogs = (await dogService.GetUnapproved()).ToList();
+    }
+
+    private async Task DeleteById(int id)
+    {
+        bool deleted = await dogService.Delete(id);
+
+        if (deleted)
+        {
+            var dogToDelete = dogs.SingleOrDefault(d => d.Id == id);
+            dogs.Remove(dogToDelete);
+            Snackbar.Add("Dog deleted succesfully", Severity.Success);
+            return;
+        }
+
+        Snackbar.Add("Error, dog could not be deleted", Severity.Error);
+
+    }
+
+    private async Task ApproveById(int id)
+    {
+        bool approved = await dogService.SetApprovalStatus(id, true);
+
+        if (approved)
+        {
+            var dogToDelete = dogs.SingleOrDefault(d => d.Id == id);
+            dogs.Remove(dogToDelete);
+            Snackbar.Add("Dog stauts approved succesfully", Severity.Success);
+            return;
+        }
+
+        Snackbar.Add("Error, dog could not be approved", Severity.Error);
+
+    }
+}

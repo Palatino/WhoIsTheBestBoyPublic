@@ -1,0 +1,87 @@
+﻿@inject IDogService dogService;
+ 
+<MudItem sm="6" md="6" lg="3" Class="flex-grow-1">
+    <MudCard Class="d-flex flex-column boxShadow">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h5" Align="Align.Center">
+                    @Dog.Name                 
+                    @if (Dog.DaysAtNumberOne > 0)
+                        {
+                            <img src="pictures/medal1.png" style="width:7%; position:relative; top:5px; " />
+                        }
+                </MudText>
+
+            </CardHeaderContent>
+            <CardHeaderActions>
+
+            </CardHeaderActions>
+        </MudCardHeader>
+        <MudCardContent>
+
+            @if (string.IsNullOrWhiteSpace(Dog.AvatarURL))
+            {
+                <img src="pictures/defaultDog.png" style="width:100%; padding:10px" />
+            }
+            else
+            {
+                <img src="@Dog.AvatarURL" style="width:100%; padding:10px;" />
+            }
+        </MudCardContent>
+        <MudCardActions Class="d-flex">
+            <MudGrid>
+                <MudItem xs=12 Class="justify-space-between">
+
+                        <MudChip><p>@Dog.NumberOfMatches matches</p></MudChip>
+
+                        @if (Dog.NumberOfMatches > 0)
+                        {
+                            <MudChip><p>@(Dog.NumberOfWins *100/Dog.NumberOfMatches) % succes</p></MudChip>
+                        }
+
+                        @if (PositionInRanking is not null && Dog.NumberOfMatches > 0)
+                        {
+                            <MudChip><p>Ranking: @PositionInRanking.Item1 out of @PositionInRanking.Item2</p></MudChip>
+                        }
+
+                </MudItem>
+
+                <MudItem xs="12" Class="justify-space-between">
+                    <MudPaper Class="d-flex justify-center" Elevation="0">
+                        @if (Dog.Approved)
+                        {
+                            <MudIcon Icon="@Icons.Material.Rounded.CheckCircle" Class="ml-2 mr-auto" Title="Approved" Color="Color.Success" />
+                        }
+                        else
+                        {
+                            <MudIcon Icon="@Icons.Material.Rounded.CheckCircle" Class="ml-2 mr-auto"  Title="Awaiting approval" Color="Color.Warning" />
+                            <p>Awaiting approval</p>
+
+                        }
+                        <MudIconButton Icon="@Icons.Material.Rounded.Delete" Color="Color.Error" Class="mr-2 ml-auto py-0" OnClick="DeleteDog" />
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudCardActions>
+    </MudCard>
+</MudItem>
+
+@code {
+
+    [Parameter]
+    public DogDTO Dog { get; set; }
+    [Parameter]
+    public EventCallback<int> DeleteById { get; set; }
+    public Tuple<int,int> PositionInRanking { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        PositionInRanking = await dogService.GetPositionInRanking(Dog.Id);
+    }
+
+    public async Task DeleteDog()
+    {
+        await DeleteById.InvokeAsync(Dog.Id);
+    }
+
+}

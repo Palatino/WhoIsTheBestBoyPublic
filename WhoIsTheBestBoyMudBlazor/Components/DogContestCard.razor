@@ -1,0 +1,80 @@
+﻿
+@if (Dog is not null)
+{
+<div class="@divClass" dropzone="true"
+     ondragover="event.preventDefault();"
+     ondragstart="event.dataTransfer.setData('', event.target.id);"
+     @ondrop="OnDrop"
+     @ondragenter="OnDragEnter"
+     @ondragleave="OnDragLeave">
+
+    <MudCard Style="position:relative" Class="boxShadow">
+        <div class="ignoreMouse">
+            <MudCardHeader Class="ma-0 py-0">
+                <CardHeaderContent>
+                    <MudText Typo="Typo.h5" Align="Align.Center">@Dog.Name</MudText>
+                </CardHeaderContent>
+                <CardHeaderActions>
+
+                </CardHeaderActions>
+            </MudCardHeader>
+            <MudCardContent Class="ma-0 py-0">
+                @if (string.IsNullOrWhiteSpace(Dog.AvatarURL))
+                {
+                    <img src="pictures/defaultDog.png" style="width:100%; padding:10px" />
+                }
+                else
+                {
+                    <img src="@Dog.AvatarURL" style="width:100%; padding:10px;" />
+                }
+            </MudCardContent>
+        </div>
+        <MudCardActions>
+            <MudButton Variant="Variant.Filled" StartIcon="fas fa-bone" FullWidth="true" Color="Color.Primary" OnClick="OnClick">Good boy!</MudButton>
+        </MudCardActions>
+    </MudCard>
+</div>
+}
+
+
+
+
+@code {
+
+    public DogDTO Dog { get; set; }
+
+    [Parameter]
+    public EventCallback<int> ProcessMatch { get; set; }
+
+    private string divClass = "";
+
+    public void RefreshDog(DogDTO newDog)
+    {
+        SetDog(newDog);
+    }
+
+    public void SetDog(DogDTO dog)
+    {
+        Dog = dog;
+        StateHasChanged();
+    }
+
+    private async Task OnClick()
+    {
+        await ProcessMatch.InvokeAsync(Dog.Id);
+    }
+
+    private async Task OnDrop()
+    {
+        await ProcessMatch.InvokeAsync(Dog.Id);
+        OnDragLeave();
+    }
+    private void OnDragEnter()
+    {
+        divClass = "dragEnter";
+    }
+    private void OnDragLeave()
+    {
+        divClass = "";
+    }
+}

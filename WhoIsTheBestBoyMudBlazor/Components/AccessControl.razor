@@ -1,0 +1,124 @@
+﻿@* Client/Shared/AccessControl.razor *@
+
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+
+@inject NavigationManager Navigation
+@inject IDogService dogService;
+@inject SignOutSessionStateManager SignOutManager
+
+
+<AuthorizeView>
+    <Authorized>
+        <MudHidden Breakpoint="Breakpoint.SmAndDown" Invert="true">
+            @if (numberOfDogsToApprove > 0 && isAdmin)
+            {
+                <MudBadge Start="true" Content="numberOfDogsToApprove" Color="Color.Error" Overlap="true" OnClick="RedirectToApprove">
+                    <MudMenu Icon="@icon" Color="Color.Tertiary" Direction="Direction.Left" OffsetX="true">
+                        <MudMenuItem>
+                            <MudText Typo="Typo.h6">Hello, @context.User.Identity.Name!</MudText>
+                        </MudMenuItem>
+                        <MudMenuItem>
+                            <MudButton OnClick="BeginSignOut" Color="Color.Info"> Log out</MudButton>
+                        </MudMenuItem>
+                    </MudMenu>
+                </MudBadge>
+            }
+            else
+            {
+                <MudMenu Icon="@icon" Direction="Direction.Left" Color="Color.Tertiary" OffsetX="true">
+                    <MudMenuItem>
+                        <MudButton OnClick="BeginSignOut" Color="Color.Info">Log out</MudButton>
+                    </MudMenuItem>
+                </MudMenu>
+            }
+
+        </MudHidden>
+        <MudHidden Breakpoint="Breakpoint.MdAndUp" Invert="true">
+            @if (numberOfDogsToApprove > 0 && isAdmin)
+            {
+                <MudBadge Start="true" Content="numberOfDogsToApprove" Color="Color.Error" Overlap="false" OnClick="RedirectToApprove">
+                    <MudIcon Icon="@icon" Class="mr-4"></MudIcon>
+                </MudBadge>
+            }
+            else
+            {
+                <MudIcon Icon="@icon" Class="mr-4"></MudIcon>
+            }
+
+            <MudText Typo="Typo.h6">Hello, @context.User.Identity.Name!</MudText>
+            <MudButton OnClick="BeginSignOut" Color="Color.Secondary"> Log out</MudButton>
+        </MudHidden>
+    </Authorized>
+    <NotAuthorized>
+        <MudButton OnClick="BeginSignIn" Color="Color.Secondary"> Log in</MudButton>
+    </NotAuthorized>
+</AuthorizeView>
+
+
+@code{
+    private int numberOfDogsToApprove;
+    private MudBadge badge;
+    private bool isAdmin = false;
+    private string icon
+    {
+        get
+        {
+            if (isAdmin) return "fas fa-user-cog";
+            else return "fas fa-user";
+        }
+    }
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        var authState = await authenticationStateTask;
+        isAdmin = authState.User.IsInRole("admin");
+        if (isAdmin)
+        {
+            StartRefreshingOfBadge();
+        }
+
+    }
+
+    private async Task BeginSignOut(MouseEventArgs args)
+    {
+        await SignOutManager.SetSignOutState();
+        Navigation.NavigateTo("authentication/logout");
+    }
+
+    private void BeginSignIn(MouseEventArgs args)
+    {
+        Navigation.NavigateTo("authentication/login");
+    }
+
+    private void RedirectToApprove()
+    {
+        Navigation.NavigateTo("/approve");
+    }
+
+    private async Task StartRefreshingOfBadge()
+    {
+        //Call the server every 5 sec to check if the number of dogs to approve has changed
+        //This is not a good solution. SignalR can easily improve this
+        while (true)
+        {
+            await RefreshBadge();
+            await Task.Delay(5000);
+        }
+    }
+    private async Task RefreshBadge()
+    {
+
+        int unapproved = await dogService.GetNumberUnapproved();
+        if (unapproved != numberOfDogsToApprove)
+        {
+            numberOfDogsToApprove = unapproved;
+            StateHasChanged();
+        }
+    }
+}

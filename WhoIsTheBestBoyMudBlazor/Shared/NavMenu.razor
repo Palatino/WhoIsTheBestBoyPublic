@@ -1,0 +1,16 @@
+﻿<MudNavMenu>
+    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.List">Contest</MudNavLink>
+    <MudNavLink Href="/ranking" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Ranking</MudNavLink>
+    <AuthorizeView>
+        <MudNavLink Href="/dogs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Your Dogs</MudNavLink>
+        <MudNavLink Href="/dogs/create" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Add dog</MudNavLink>
+    </AuthorizeView>
+    <AuthorizeView Roles="admin">
+        <MudNavLink Href="/approve" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Manage approvals</MudNavLink>
+    </AuthorizeView>
+    <MudNavLink Href="/about" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">About this app</MudNavLink>
+</MudNavMenu>
+
+@code{
+
+}

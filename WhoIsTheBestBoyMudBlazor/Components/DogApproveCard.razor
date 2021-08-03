@@ -1,0 +1,47 @@
+﻿<MudItem xs="6" md="3" Class="flex-grow-1">
+    <MudCard Class="d-flex flex-column">
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h5" Align="Align.Center">@Dog.Name</MudText>
+            </CardHeaderContent>
+            <CardHeaderActions>
+
+            </CardHeaderActions>
+        </MudCardHeader>
+        <MudCardContent>
+            @if (string.IsNullOrWhiteSpace(Dog.AvatarURL))
+            {
+                <img src="pictures/defaultDog.png" style="width:100%; padding:10px" />
+            }
+            else
+            {
+                <img src="@Dog.AvatarURL" style="width:100%; padding:10px;" />
+            }
+        </MudCardContent>
+        <MudCardActions>
+            <MudButton Variant="Variant.Filled" EndIcon="@Icons.Material.Filled.Send" Color="Color.Primary" OnClick="ApproveDog">Approve</MudButton>
+            <MudIconButton Icon="@Icons.Material.Rounded.Delete" Color="Color.Error" Class="mr-2 ml-auto" OnClick="DeleteDog" />
+        </MudCardActions>
+    </MudCard>
+</MudItem>
+
+@code {
+
+    [Parameter]
+    public DogDTO Dog { get; set; }
+    [Parameter]
+    public EventCallback<int> DeleteById { get; set; }
+
+    [Parameter]
+    public EventCallback<int> ApproveById { get; set; }
+
+    public async Task DeleteDog()
+    {
+        await DeleteById.InvokeAsync(Dog.Id);
+    }
+
+    public async Task ApproveDog()
+    {
+        await ApproveById.InvokeAsync(Dog.Id);
+    }
+}

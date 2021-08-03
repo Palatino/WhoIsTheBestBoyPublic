@@ -1,0 +1,142 @@
+﻿@inject IDogService dogService;
+@inject IDogService dogService
+
+@if (dogQueue is null || dogQueue.Count == 0)
+{
+    <LoadingPanel></LoadingPanel>
+}
+
+
+
+
+<MudGrid Class="mx-4 my-2 justify-center">
+    @if (FirstDogCard is not null)
+    {
+    <MudItem xs="2">
+        <MudSwitch @bind-Checked="survivorStays" Class="">@(survivorStays?"Best Stays":"Both new")</MudSwitch>
+    </MudItem>
+    <MudItem xs="12">
+        <MudHidden Breakpoint="Breakpoint.MdAndUp" Invert="true">
+            <MudText Typo="Typo.h5" Align="Align.Center" Class="">Drag the treat to your favourite dog or click on its button</MudText>
+        </MudHidden>
+        <MudHidden Breakpoint="Breakpoint.SmAndDown" Invert="true">
+            <MudText Typo="Typo.h5" Align="Align.Center" Class="">Click on your favourite dog</MudText>
+        </MudHidden>
+    </MudItem>
+
+        <MudItem xs="12" Class="d-flex justify-center">
+            <MudGrid>
+                <MudItem xs="2" Class="d-flex justify-start">
+
+                </MudItem>
+                <MudItem xs="8">
+                    <MudHidden Breakpoint="Breakpoint.MdAndUp" Invert="true">
+                        <div draggable="true">
+                            <MudContainer MaxWidth="MaxWidth.Medium" Class="d-flex justify-center" Id="dragBone">
+                                <img src="pictures/Bone-icon.png" style="width:30%; margin:10px 10px 10px 10px" />
+                            </MudContainer>
+                        </div>
+                    </MudHidden>
+                </MudItem>
+                <MudItem xs="2">
+                </MudItem>
+            </MudGrid>
+
+        </MudItem>
+    }
+
+    <MudItem xs="6" md="4" Class="d-flex justify-space-around ">
+        <DogContestCard @ref="FirstDogCard" ProcessMatch="SendMatchResult"></DogContestCard>
+    </MudItem>
+    <MudHidden Breakpoint="Breakpoint.MdAndDown">
+        <MudItem xs="0" md="2"></MudItem>
+    </MudHidden>
+
+    <MudItem xs="6" md="4">
+        <DogContestCard @ref="SecondDogCard" ProcessMatch="SendMatchResult"></DogContestCard>
+    </MudItem>
+
+</MudGrid>
+
+
+
+
+@code {
+
+    public Queue<DogDTO> dogQueue;
+    public DogDTO FirstDog { get; set; }
+    public DogDTO SecondDog { get; set; }
+    public bool survivorStays { get; set; } = false;
+
+    DogContestCard FirstDogCard;
+    DogContestCard SecondDogCard;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var newDogs = (await dogService.GetRandomDogs(10)).ToList();
+        dogQueue = new Queue<DogDTO>(newDogs);
+        FirstDog = dogQueue.Dequeue();
+        SecondDog = dogQueue.Dequeue();
+
+    }
+
+
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        FirstDogCard.SetDog(FirstDog);
+        SecondDogCard.SetDog(SecondDog);
+    }
+
+
+    private async Task SendMatchResult(int winnerId)
+    {
+        if (dogQueue.Count < 5)
+        {
+            await AddMoreDogsToQueueAsync();
+        }
+
+        await UpdateCards(winnerId);
+        await dogService.ProcessMatch(FirstDog.Id, SecondDog.Id, winnerId);
+
+    }
+
+    private async Task AddMoreDogsToQueueAsync()
+    {
+        var newDownloadedDogs = (await dogService.GetRandomDogs(10)).ToList();
+        foreach (var dog in newDownloadedDogs)
+        {
+            if (dogQueue.Select(d => d.Id).ToList().Contains(dog.Id)
+                || dog.Id == FirstDog.Id
+                || dog.Id == SecondDog.Id)
+            {
+                continue;
+            }
+            dogQueue.Enqueue(dog);
+        }
+    }
+
+    private async Task UpdateCards(int winnerId)
+    {
+        if (survivorStays)
+        {
+            if (winnerId == FirstDog.Id)
+            {
+                SecondDog = dogQueue.Dequeue();
+                SecondDogCard.RefreshDog(SecondDog);
+            }
+            else
+            {
+                FirstDog = dogQueue.Dequeue();
+                FirstDogCard.RefreshDog(FirstDog);
+            }
+        }
+        else
+        {
+            SecondDog = dogQueue.Dequeue();
+            SecondDogCard.RefreshDog(SecondDog);
+            FirstDog = dogQueue.Dequeue();
+            FirstDogCard.RefreshDog(FirstDog);
+        }
+    }
+}

@@ -1,0 +1,26 @@
+﻿
+@inject IDogService dogService;
+
+@if (TopTenDogs is not null && TopTenDogs.Count > 0)
+{
+    <MudText Typo="Typo.h5" Align="Align.Center" Class="my-5">Best boys!</MudText>
+    <MudGrid>
+        @for (int i = 0; i < TopTenDogs.Count; i++)
+        {
+            <RankingCardComponent Dog="TopTenDogs[i]" Position="i+1"></RankingCardComponent>
+        }
+    </MudGrid>
+}
+else
+{
+    <LoadingPanel></LoadingPanel>
+}
+
+@code {
+    public List<DogDTO> TopTenDogs { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        TopTenDogs = (await dogService.GetRankingTop()).ToList();
+    }
+}

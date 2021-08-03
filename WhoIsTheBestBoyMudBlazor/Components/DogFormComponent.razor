@@ -1,0 +1,124 @@
+﻿
+@using System.IO;
+@inject IDogService dogService;
+@inject NavigationManager navigationManager
+@inject ISnackbar Snackbar
+@inject IJSRuntime jsRuntime
+@attribute [Authorize]
+
+<EditForm Model="newDogDTo" OnValidSubmit="SubmitForm">
+    <MudGrid Class="d-flex justify-center">
+        <MudItem xs="12" sm="8">
+            <MudCard Class="mt-6 boxShadow">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Class="d-flex justify-center py-2 px-1 mt-1" Typo="Typo.h5">Upload a new dog!</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent Class="d-flex flex-column justify-center py-2 px-1 mt-1 ">
+                    <div id="resizer-demo"></div>
+
+                    <MudItem Class="d-flex justify-center">
+                        <div id="resizer-demo"></div>
+                        @if (uncroppedImage is null)
+                        {
+                            <img src="pictures/defaultDog.png" style="max-width:300px; width:100%" />
+
+                        }
+                    </MudItem>
+
+                    <InputFile id="fileInput" OnChange="HandleImageUpload" multiple accept=".jpg, .jpeg, .png" hidden></InputFile>
+                    <div class="d-flex justify-center">
+                        <MudFab HtmlTag="label" Class="mt-2"
+                                Disabled="uploadingImage"
+                                IconColor="Color.Dark"
+                                Color="Color.Secondary"
+                                Icon=@(uploadingImage?"fas fa-bone fa-spin": Icons.Filled.Image)
+                                Label=@(uploadingImage?"Uploading Image":"Add Image")
+                                for="fileInput"
+                                Style="width:50%; color:var(--mud-palette-dark)"></MudFab>
+
+                    </div>
+                    <MudTextField Label="Name" @bind-Value="newDogDTo.Name" For="@(() => newDogDTo.Name)" Immediate="true" FullWidth="true" OnKeyUp="CheckFormIsValid" />
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton StartIcon="@(savingDog?"fas fa-bone fa-spin":"")" ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@((!FormValid || savingDog))" Size="Size.Large" Class="mt-6" Style="width:100%">@(savingDog ? "Saving dog" : "Save Dog")</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+
+</EditForm>
+
+
+
+
+@code {
+
+    NewDogDTO newDogDTo = new NewDogDTO();
+    public byte[] uncroppedImage;
+    public bool FormValid = false;
+    private bool savingDog = false;
+    private bool uploadingImage = false;
+    private IJSObjectReference croppie;
+
+    private async Task HandleImageUpload(InputFileChangeEventArgs e)
+    {
+        uploadingImage = true;
+        FileInfo fileInfo = new FileInfo(e.File.Name);
+        List<string> validFormats = new List<string>() { ".jpg", ".jpeg", ".png" };
+        if (!validFormats.Contains(fileInfo.Extension.ToLower()))
+        {
+            Snackbar.Add("File not supported");
+
+            return;
+        }
+        MemoryStream ms = new MemoryStream();
+        await e.File.OpenReadStream(maxAllowedSize: 10000000).CopyToAsync(ms);
+        uncroppedImage = ms.ToArray();
+        if (croppie is null)
+        {
+            croppie = await jsRuntime.CreateCroppie(System.Convert.ToBase64String(uncroppedImage), fileInfo.Extension.ToLower());
+        }
+        else
+        {
+            string parameterString = $"data:image/{fileInfo.Extension.ToLower().Replace(".", "")};base64,"
+                + System.Convert.ToBase64String(uncroppedImage);
+            await croppie.InvokeVoidAsync("bind", parameterString);
+        }
+        uploadingImage = false;
+    }
+
+    private async Task SubmitForm(EditContext e)
+    {
+        savingDog = true;
+
+        string base64CroppedImage = await croppie.InvokeAsync<string>("result", new { type = "base64", format = "jpeg" });
+        base64CroppedImage = base64CroppedImage.Replace("data:image/jpeg;base64,", "");
+        newDogDTo.Avatar = Convert.FromBase64String(base64CroppedImage);
+        var createdDogDTO = await dogService.CreateDog(newDogDTo);
+        if (createdDogDTO.Id > 0)
+        {
+            Snackbar.Add("Dog saved successfully", Severity.Success);
+            navigationManager.NavigateTo("/dogs");
+        }
+        else
+        {
+            Snackbar.Add("Something went wrong while saving the dog", Severity.Error);
+        }
+        savingDog = false;
+
+    }
+
+    private void CheckFormIsValid()
+    {
+        FormValid = !string.IsNullOrEmpty(newDogDTo.Name) && uncroppedImage is not null && uncroppedImage.Length > 0;
+    }
+
+    private void OnNameChange(FocusEventArgs e)
+    {
+
+    }
+
+}

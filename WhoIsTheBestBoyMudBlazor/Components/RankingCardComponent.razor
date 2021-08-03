@@ -1,0 +1,117 @@
+﻿<MudItem md="@itemSize" xs="12">
+    <MudContainer Class="d-flex flex-column align-content-center">
+        <MudContainer Class="d-flex justify-center pa-0 boxShadow" style="@divStyle">
+            <img src="@Dog.AvatarURL" style="@imageStyle" />
+            @if (Position < 4)
+            {
+                <img src="@medalUrl" style="@medalStyle" />
+            }
+        </MudContainer>
+        <MudText Typo="Typo.h3" Align="Align.Center">@Dog.Name</MudText>
+    </MudContainer>
+</MudItem>
+
+
+@code {
+
+    [Parameter]
+    public DogDTO Dog { get; set; }
+    [Parameter]
+    public int Position { get; set; }
+
+    private int imageSize {
+        get
+        {
+            switch (Position)
+            {
+                case 1:
+                    return 300;
+                case 2:
+                    return 300;
+                case 3:
+                    return 300;
+                default:
+                    return 200;
+            }
+
+        }
+    }
+    private int itemSize
+    {
+        get
+        {
+            switch (Position)
+            {
+                case 1:
+                    return 12;
+                case 2:
+                    return 6;
+                case 3:
+                    return 6;
+                default:
+                    return 3;
+            }
+
+        }
+    }
+
+    private string color
+    {
+        get
+        {
+            switch (Position)
+            {
+                case 1:
+                    return "#fcd305";
+                case 2:
+                    return "#bdbdbd";
+                case 3:
+                    return "#b3734f";
+                default:
+                    return "#6ca33e";
+            }
+
+        }
+    }
+
+    private string divStyle {
+        get
+        {
+            return $"background-color:{color}; height:{imageSize}px; width:{imageSize}px; border-radius:50%";
+        }
+    }
+    private string imageStyle
+    {
+        get
+        {
+            int movement = Convert.ToInt32(imageSize * (1 - 0.9) /2);
+            return $"border-radius:50%; width:90%; height:90%; transform: translate(0%, {movement}px)" ;
+        }
+    }
+    private string medalUrl
+    {
+        get
+        {
+            return $"pictures/medal{Position}.png";
+            }
+
+    }
+    private string medalStyle
+    {
+        get
+        {
+            switch (Position)
+            {
+                case 1:
+                    return "position:absolute; width:150px; transform:translate(150px, 0px)";
+                case 2:
+                    return "position:absolute; width:100px; transform:translate(100px, 0px)";
+                case 3:
+                    return "position:absolute; width:100px; transform:translate(100px, 0px)";
+                default:
+                    return "";
+            }
+
+        }
+    }
+}
