@@ -1,4 +1,4 @@
-[![Click on image to see video](https://github.com/Palatino/WhoIsTheBestBoyPublic/blob/master/.github/images/Video.png)](https://www.youtube.com/watch?v= t9t93LGl4TQ)
+[![Click on image to see video](https://github.com/Palatino/WhoIsTheBestBoyPublic/blob/master/.github/images/Video.png)](https://www.youtube.com/watch?v=t9t93LGl4TQ)
 
 
 
